@@ -9,15 +9,18 @@ class CFMM:
     `gamma`:    fee regime
     '''
     def __init__(self, Ai, R, gamma):
-        self.Ai = Ai
-        self.R = R
-        self.gamma = gamma
+        self.Ai = Ai            ## Index vector
+        self.R = R              ## Reserve vector
+        self.gamma = gamma      ## Fee regime
 
     def trading_function(self):
         raise NotImplementedError("Subclass must implement abstract method")
 
     def update_reserves(self, deltain, deltaout):
         self.R += deltain - deltaout
+    
+    def get_price(self):
+        raise NotImplementedError("Subclass must implement abstract method")
     
     def find_arb(self, v):
         raise NotImplementedError("Subclass must implement abstract method")
@@ -40,6 +43,10 @@ class ConstantProduct(CFMM):
     def update_reserves(self, deltain, deltaout):
         ## Updates pool reserves after arbitrage.
         super.update_reserves(deltain, deltaout)
+
+    def get_price(self):
+        ## Returns the marginal price of token 0 in terms of token 1.
+        return self.R[1] / self.R[0]
     
     def find_arb(self, v):
         ## See App. A of "Analysis of Uniswap Markets".
@@ -79,11 +86,15 @@ class GeometricMeanTwoToken(CFMM):
         ## Updates pool reserves after arbitrage.
         super().update_reserves(deltain, deltaout)
 
+    def get_price(self):
+        ## Returns the marginal price of token 0 in terms of token 1.
+        return (self.w[0] / self.w[1]) * self.trading_function() ** (1 / self.w[1]) * self.R[0] ** (- self.w[0]/self.w[1] - 1)
+
     def find_arb(self, v):
         def geo_arb_deltain(m, R1, R2, gamma, eta):
-            np.max((gamma * m * eta * R1 * R2**eta)**(1 / (eta + 1)) - R2, 0) / gamma
+            np.max((gamma * m * eta * R1 * R2**eta) ** (1 / (eta + 1)) - R2, 0) / gamma
         def geo_arb_deltaout(m, R1, R2, gamma, eta):
-            np.max(R1 - ((R2 * R1**(1 / eta)) / (eta * gamma * m))**(eta / (1 + eta)), 0)
+            np.max(R1 - ((R2 * R1 ** (1 / eta)) / (eta * gamma * m)) ** (eta / (1 + eta)), 0)
         
         ## Solves the maximum arbitrage problem for 2 token G3M.
         eta = self.w[0] / self.w[1]
@@ -96,6 +107,7 @@ class GeometricMeanTwoToken(CFMM):
         return deltain, deltaout
 
 def zerotrade(c):
+    ## Returns zero trade vectors.
     n = len(c.Ai)
     deltain, deltaout = np.zeros(n), np.zeros(n)
     return deltain, deltaout

@@ -33,7 +33,7 @@ class Router:
         if v is None:
             v = self.v
         self.find_arb(v)
-        _, v = opt.minimize(fun=fn, method='L-BFGS-B')
+        v = opt.minimize(fun=fn, x0=v, method='L-BFGS-B', jac=self.objective.grad, bounds=list(zip(self.objective.lower_limit(), self.objective.upper_limit())))
         self.v = v
         self.find_arb(self.v)
         return self.deltain, self.deltaout

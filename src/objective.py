@@ -38,6 +38,7 @@ class BasketLiquidation:
     '''
     Objective function used for liquidating a basket of tokens to recieve maximum amount of token with index `i`.
     --- parameters ---
+    `i`:        Index of token to swap into.
     `deltain`:  Vector of token balances before liquidation.
     '''
     def __init__(self, i, deltain):
