@@ -3,7 +3,6 @@ import numpy as np
 class Objective:
     pass
 
-
 class LinearNonnegative(Objective):
     def __init__(self, c):
         if not np.all(c > 0):
