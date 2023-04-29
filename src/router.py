@@ -15,7 +15,7 @@ class Router:
         def sub_method(i):
             return self.cfmms[i].find_arb(v)
         threads = []
-        with ThreadPoolExecutor as executor:
+        with ThreadPoolExecutor() as executor:
             threads = list(executor.map(sub_method, range(len(self.cfmms))))
         self.deltain, self.deltaout = zip(*threads)
         return self.deltain, self.deltaout

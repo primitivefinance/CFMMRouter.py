@@ -57,8 +57,8 @@ class ConstantProduct(CFMM):
         
         ## Solves the maximum arbitrage problem for 2 token CPMM.
         k = self.trading_function()
-        deltain = []
-        deltaout = []
+        deltain = [0,0]
+        deltaout = [0,0]
         deltain[0] = prod_arb_deltain(v[1]/v[0], self.R[0], k, self.gamma)
         deltain[1] = prod_arb_deltain(v[0]/v[1], self.R[1], k, self.gamma)
         deltaout[0] = prod_arb_deltaout(v[1]/v[0], self.R[0], k, self.gamma)
@@ -98,8 +98,8 @@ class GeometricMeanTwoToken(CFMM):
         
         ## Solves the maximum arbitrage problem for 2 token G3M.
         eta = self.w[0] / self.w[1]
-        deltain = []
-        deltaout = []
+        deltain = [0,0]
+        deltaout = [0,0]
         deltain[0] = geo_arb_deltain(v[1]/v[0], self.R[1], self.R[0], self.gamma, eta)
         deltain[1] = geo_arb_deltain(v[0]/v[1], self.R[0], self.R[1], self.gamma, 1/eta)
         deltaout[0] = geo_arb_deltaout(v[0]/v[1], self.R[0], self.R[1], self.gamma, 1/eta)
