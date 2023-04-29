@@ -12,20 +12,27 @@ class LinearNonnegative:
         self.c = c
 
     def f(self, v):
+        # Evaluate the conjugate of the utility function of the `LineaNonnegative` objective at `v`.
         if np.all(self.c <= v):
             return 0
         return np.inf
 
     def grad(self, v):
         if np.all(self.c <= v):
-            return np.zeros_like(v)
-        return np.full_like(v, np.inf)
+            return np.zeros(len(self.c))
+        output = []
+        for i in range(len(self.c)):
+            output.append(np.inf)
+        return output
 
     def lower_limit(self):
         return self.c + 1e-8
 
     def upper_limit(self):
-        return np.inf
+        output = []
+        for i in range(len(self.c)):
+            output.append(np.inf)
+        return output
 
 class BasketLiquidation:
     '''
@@ -65,7 +72,8 @@ class Swap(BasketLiquidation):
     --- parameters ---
     `i`:        Index of token to swap into.
     `j`:        Index of token to swap out of.
-
+    `delta`:    Desired swap quantity.
+    `n`:        Number of tokens.
     '''
     def __init__(self, i, j, delta, n):
         deltain = np.zeros(n)

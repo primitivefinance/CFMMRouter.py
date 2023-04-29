@@ -1,5 +1,5 @@
 import numpy as np
-import cvxpy as cvx
+import scipy.optimize as opt
 from concurrent.futures import ThreadPoolExecutor
 from cfmms import zerotrade
 
@@ -21,6 +21,20 @@ class Router:
         return self.deltain, self.deltaout
     
     def route(self, v=None):
-        # route trrade to each cfmms
-        k = 0
+        def fn(v):
+            if not np.all(v == self.v):
+                self.find_arb(v)
+                self.v = v.copy()
+            accumulator = 0.0
+            for (i,j,k) in zip(self.deltain, self.deltaout, self.cfmms):
+                accumulator += np.dot(self.deltaout, v[k.Ai]) - np.dot(self.deltain, v[k.Ai])
+            return self.objective.f(v) + accumulator
+
+        if v is None:
+            v = self.v
+        self.find_arb(v)
+        _, v = opt.minimize(fun=fn, method='L-BFGS-B')
+        self.v = v
+        self.find_arb(self.v)
+        return self.deltain, self.deltaout
  
