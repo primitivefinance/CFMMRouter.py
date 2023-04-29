@@ -1,9 +1,11 @@
 import numpy as np
 
-class Objective:
-    pass
-
-class LinearNonnegative(Objective):
+class LinearNonnegative:
+    '''
+    Objective function used for arbitrage detection. Whenever an arbitrage opportunity is found, the optimization problem yields a nonzero solution.
+    --- parameters ---
+    `c`:    Positive price vector.
+    '''
     def __init__(self, c):
         if not np.all(c > 0):
             raise ValueError("All elements must be strictly positive.")
@@ -25,8 +27,12 @@ class LinearNonnegative(Objective):
     def upper_limit(self):
         return np.inf
 
-
-class BasketLiquidation(Objective):
+class BasketLiquidation:
+    '''
+    Objective function used for liquidating a basket of tokens to recieve maximum amount of token with index `i`.
+    --- parameters ---
+    `deltain`:  Vector of token balances before liquidation.
+    '''
     def __init__(self, i, deltain):
         if i <= 0 or i > len(deltain):
             raise ValueError("Invalid index i.")
@@ -53,9 +59,15 @@ class BasketLiquidation(Objective):
     def upper_limit(self):
         return np.inf
 
-
 class Swap(BasketLiquidation):
-    def __init__(self, i, j, rho, n):
+    '''
+    Special case of basket liquiditation that swaps from token j to token i while maximizing the amount of token i recieved.
+    --- parameters ---
+    `i`:        Index of token to swap into.
+    `j`:        Index of token to swap out of.
+
+    '''
+    def __init__(self, i, j, delta, n):
         deltain = np.zeros(n)
-        deltain[j - 1] = rho
+        deltain[j-1] = delta
         super().__init__(i, deltain)

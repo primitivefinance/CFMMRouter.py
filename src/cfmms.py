@@ -1,6 +1,13 @@
 import numpy as np
 
 class CFMM:
+    '''
+    CFMM superclass. Initializes CFMM state then defines the generic methods common to all CFMMs.
+    --- parameters ---
+    `Ai`:       index vector
+    `R`:        reserve vector
+    `gamma`:    fee regime
+    '''
     def __init__(self, Ai, R, gamma):
         self.Ai = Ai
         self.R = R
@@ -15,24 +22,33 @@ class CFMM:
     def find_arb(self, v):
         raise NotImplementedError("Subclass must implement abstract method")
     
-
-    
 class ConstantProduct(CFMM):
+    '''
+    Constant Product CFMM (Uniswap V2). Inherits from CFMM superclass.
+    --- parameters ---
+    `Ai`:       index vector
+    `R`:        reserve vector
+    `gamma`:    fee regime
+    '''
     def __init__(self, Ai, R, gamma):
         super().__init__(Ai, R, gamma)
 
     def trading_function(self):
+        ## Returns trading function value.
         return self.R[0] * self.R[1]
 
     def update_reserves(self, deltain, deltaout):
+        ## Updates pool reserves after arbitrage.
         super.update_reserves(deltain, deltaout)
     
     def find_arb(self, v):
+        ## See App. A of "Analysis of Uniswap Markets".
         def prod_arb_deltain(m, R, k, gamma):
             np.max(np.sqrt(gamma*m*k)-R, 0) / gamma
         def prod_arb_deltaout(m, R, k, gamma):
             np.max(R - np.sqrt(k/(gamma*m)), 0)
         
+        ## Solves the maximum arbitrage problem for 2 token CPMM.
         k = self.trading_function()
         deltain = []
         deltaout = []
@@ -43,14 +59,24 @@ class ConstantProduct(CFMM):
         return deltain, deltaout
 
 class GeometricMeanTwoToken(CFMM):
+    '''
+    Two token implementation of the Geometric Mean Market Maker (G3M). Inherits from CFMM superclass.
+    --- parameters ---
+    `Ai`:       index vector
+    `R`:        reserve vector
+    `gamma`:    fee regime
+    `w`:        weight vector (must satisfy: sum(w) = 1)
+    '''
     def __init__(self, Ai, R, gamma, w):
         super().__init__(Ai, R, gamma)
         self.w = w
 
     def trading_function(self):
+        ## Returns trading function value.
         return self.R[0]**self.w[0] * self.R[1]**self.w[1]
     
     def update_reserves(self, deltain, deltaout):
+        ## Updates pool reserves after arbitrage.
         super().update_reserves(deltain, deltaout)
 
     def find_arb(self, v):
@@ -59,6 +85,7 @@ class GeometricMeanTwoToken(CFMM):
         def geo_arb_deltaout(m, R1, R2, gamma, eta):
             np.max(R1 - ((R2 * R1**(1 / eta)) / (eta * gamma * m))**(eta / (1 + eta)), 0)
         
+        ## Solves the maximum arbitrage problem for 2 token G3M.
         eta = self.w[0] / self.w[1]
         deltain = []
         deltaout = []
