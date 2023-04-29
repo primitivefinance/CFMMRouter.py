@@ -4,7 +4,6 @@ from objective import LinearNonnegative, BasketLiquidation, Swap
 import numpy as np
 
 ## Parameters
-p = np.array([3.0, 1.0])
 Ai = np.array([1, 2])
 fee = 0.003
 gamma = 1 - fee
@@ -16,6 +15,8 @@ Arbitrage Example. Sets up a router with two CFMMs, one CPMM and one G3M, along 
 Uses the above defined parameters.
 '''
 ## Router Setup
+p = np.array([3.0, 1.0])
+
 CFMMs = []
 CFMMs.append(ConstantProduct(Ai, R, gamma))
 CFMMs.append(GeometricMeanTwoToken(Ai, R, gamma, w))
