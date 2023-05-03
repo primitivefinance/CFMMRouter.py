@@ -24,8 +24,12 @@ objective = LinearNonnegative(p)
 router = Router(objective, CFMMs, len(p))
 
 ## Arbitrage!
-print(CFMMs[0].get_price(), CFMMs[1].get_price())
+print("Uni V2 pool price before trade: ", CFMMs[0].get_price())
+print("G3M pool price before trade: ", CFMMs[1].get_price())
 deltain, deltaout = router.route()
 for i in range (0,len(CFMMs)):
     CFMMs[i].update_reserves(deltain[i], deltaout[i])
-print(CFMMs[0].get_price(), CFMMs[1].get_price())
+print("Arbitrage trade input: ", deltain)
+print("Arbitrage trade output: ", deltaout)
+print("Uni V2 pool price after trade: ", CFMMs[0].get_price())
+print("G3M pool price after trade", CFMMs[1].get_price())
