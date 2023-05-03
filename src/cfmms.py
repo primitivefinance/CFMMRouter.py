@@ -17,7 +17,7 @@ class CFMM:
         raise NotImplementedError("Subclass must implement abstract method")
 
     def update_reserves(self, deltain, deltaout):
-        self.R += deltain - deltaout
+        raise NotImplementedError("Subclass must implement abstract method")
     
     def get_price(self):
         raise NotImplementedError("Subclass must implement abstract method")
@@ -42,7 +42,9 @@ class ConstantProduct(CFMM):
 
     def update_reserves(self, deltain, deltaout):
         ## Updates pool reserves after arbitrage.
-        super.update_reserves(deltain, deltaout)
+        for i in range(len(self.R)):
+            self.R[i] += deltain[i]
+            self.R[i] -= deltaout[i]
 
     def get_price(self):
         ## Returns the marginal price of token 0 in terms of token 1.
@@ -59,11 +61,11 @@ class ConstantProduct(CFMM):
         k = self.trading_function()
         deltain = [0,0]
         deltaout = [0,0]
-        deltain[0] = prod_arb_deltain(v[1]/v[0], self.R[0], k, self.gamma)
-        deltain[1] = prod_arb_deltain(v[0]/v[1], self.R[1], k, self.gamma)
-        deltaout[0] = prod_arb_deltaout(v[1]/v[0], self.R[0], k, self.gamma)
-        deltaout[1] = prod_arb_deltaout(v[0]/v[1], self.R[1], k, self.gamma)
-        print(deltain, deltaout)
+        deltain[0] = prod_arb_deltain(v[1] / v[0], self.R[0], k, self.gamma)
+        deltain[1] = prod_arb_deltain(v[0] / v[1], self.R[1], k, self.gamma)
+        deltaout[0] = prod_arb_deltaout(v[1] / v[0], self.R[0], k, self.gamma)
+        deltaout[1] = prod_arb_deltaout(v[0] / v[1], self.R[1], k, self.gamma)
+        print("trade vectors:", deltain, deltaout)
         return deltain, deltaout
 
 class GeometricMeanTwoToken(CFMM):
@@ -85,7 +87,9 @@ class GeometricMeanTwoToken(CFMM):
     
     def update_reserves(self, deltain, deltaout):
         ## Updates pool reserves after arbitrage.
-        super().update_reserves(deltain, deltaout)
+        for i in range(len(self.R)):
+            self.R[i] += deltain[i]
+            self.R[i] -= deltaout[i]
 
     def get_price(self):
         ## Returns the marginal price of token 0 in terms of token 1.
@@ -101,14 +105,14 @@ class GeometricMeanTwoToken(CFMM):
         eta = self.w[0] / self.w[1]
         deltain = [0,0]
         deltaout = [0,0]
-        deltain[0] = geo_arb_deltain(v[1]/v[0], self.R[1], self.R[0], self.gamma, eta)
-        deltain[1] = geo_arb_deltain(v[0]/v[1], self.R[0], self.R[1], self.gamma, 1/eta)
-        deltaout[0] = geo_arb_deltaout(v[0]/v[1], self.R[0], self.R[1], self.gamma, 1/eta)
-        deltaout[1] = geo_arb_deltaout(v[1]/v[0], self.R[1], self.R[0], self.gamma, eta)
+        deltain[0] = geo_arb_deltain(v[1] / v[0], self.R[1], self.R[0], self.gamma, eta)
+        deltain[1] = geo_arb_deltain(v[0] / v[1], self.R[0], self.R[1], self.gamma, 1/eta)
+        deltaout[0] = geo_arb_deltaout(v[0] / v[1], self.R[0], self.R[1], self.gamma, 1/eta)
+        deltaout[1] = geo_arb_deltaout(v[1] / v[0], self.R[1], self.R[0], self.gamma, eta)
         return deltain, deltaout
 
 def zerotrade(c):
     ## Returns zero trade vectors.
     n = len(c.Ai)
-    deltain, deltaout = np.zeros(n), np.zeros(n)
-    return deltain, deltaout
+    vec = np.zeros(n)
+    return vec
