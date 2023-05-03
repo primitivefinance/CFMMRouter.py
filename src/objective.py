@@ -65,7 +65,10 @@ class BasketLiquidation:
         return ret
 
     def upper_limit(self):
-        return np.inf
+        output = []
+        for i in range(len(self.deltain)):
+            output.append(np.inf)
+        return output
 
 class Swap(BasketLiquidation):
     '''
