@@ -63,8 +63,8 @@ class ConstantProduct(CFMM):
         deltaout = [0,0]
         deltain[0] = prod_arb_deltain(v[1] / v[0], self.R[0], k, self.gamma)
         deltain[1] = prod_arb_deltain(v[0] / v[1], self.R[1], k, self.gamma)
-        deltaout[0] = prod_arb_deltaout(v[1] / v[0], self.R[0], k, self.gamma)
-        deltaout[1] = prod_arb_deltaout(v[0] / v[1], self.R[1], k, self.gamma)
+        deltaout[1] = prod_arb_deltaout(v[1] / v[0], self.R[0], k, self.gamma)
+        deltaout[0] = prod_arb_deltaout(v[0] / v[1], self.R[1], k, self.gamma)
         print("trade vectors:", deltain, deltaout)
         return deltain, deltaout
 
@@ -109,6 +109,7 @@ class GeometricMeanTwoToken(CFMM):
         deltain[1] = geo_arb_deltain(v[0] / v[1], self.R[0], self.R[1], self.gamma, 1/eta)
         deltaout[0] = geo_arb_deltaout(v[0] / v[1], self.R[0], self.R[1], self.gamma, 1/eta)
         deltaout[1] = geo_arb_deltaout(v[1] / v[0], self.R[1], self.R[0], self.gamma, eta)
+        print("Trade vector G3M:", deltain, deltaout)
         return deltain, deltaout
 
 def zerotrade(c):

@@ -9,7 +9,7 @@ class Router:
        self.cfmms = cfmms
        self.deltain = [zerotrade(c) for c in cfmms]
        self.deltaout = [zerotrade(c) for c in cfmms]
-       self.v = np.zeros(number_of_tokens) + 1e-8
+       self.v = np.zeros(number_of_tokens)
     
     def find_arb(self, v):
         def sub_method(i):
@@ -18,7 +18,6 @@ class Router:
         with ThreadPoolExecutor() as executor:
             threads = list(executor.map(sub_method, range(len(self.cfmms))))
         self.deltain, self.deltaout = zip(*threads)
-        print(self.deltain, self.deltaout)
         return self.deltain, self.deltaout
     
     def route(self, v=None):
@@ -31,11 +30,23 @@ class Router:
                 accumulator += np.dot(self.deltaout[i], v[self.cfmms[i].Ai]) - np.dot(self.deltain[i], v[self.cfmms[i].Ai])
             return self.objective.f(v) + accumulator
 
+        def grad(v):
+            if not np.all(v == self.v):
+                self.find_arb(v)
+                self.v = v.copy()
+            G = self.objective.grad(v)
+
+            for i in range(len(self.cfmms)):
+                G[self.cfmms[i].Ai] += self.deltain[i]
+                G[self.cfmms[i].Ai] -= self.deltaout[i]
+            return G
+
         if v is None:
             v = self.v
         fn(v)
-        v = opt.minimize(fun=fn, x0=v, method='L-BFGS-B', jac=self.objective.grad, bounds=list(zip(self.objective.lower_limit(), self.objective.upper_limit())))
+        v = opt.minimize(fun=fn, x0=v, method='L-BFGS-B', jac=grad, bounds=list(zip(self.objective.lower_limit(), self.objective.upper_limit())))
         self.v = v.x
+        print("Optimization occurs")
         self.find_arb(self.v)
         return self.deltain, self.deltaout
  
