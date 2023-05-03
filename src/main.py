@@ -4,7 +4,7 @@ from objective import LinearNonnegative, BasketLiquidation, Swap
 import numpy as np
 
 ## Parameters
-Ai = np.array([1, 2])
+Ai = np.array([0, 1])
 fee = 0.003
 gamma = 1 - fee
 R = np.array([100, 100])

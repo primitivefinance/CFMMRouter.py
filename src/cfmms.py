@@ -51,9 +51,9 @@ class ConstantProduct(CFMM):
     def find_arb(self, v):
         ## See App. A of "Analysis of Uniswap Markets".
         def prod_arb_deltain(m, R, k, gamma):
-            np.max(np.sqrt(gamma*m*k)-R, 0) / gamma
+            return np.max(np.sqrt(gamma*m*k)-R, 0) / gamma
         def prod_arb_deltaout(m, R, k, gamma):
-            np.max(R - np.sqrt(k/(gamma*m)), 0)
+            return np.max(R - np.sqrt(k/(gamma*m)), 0)
         
         ## Solves the maximum arbitrage problem for 2 token CPMM.
         k = self.trading_function()
@@ -63,6 +63,7 @@ class ConstantProduct(CFMM):
         deltain[1] = prod_arb_deltain(v[0]/v[1], self.R[1], k, self.gamma)
         deltaout[0] = prod_arb_deltaout(v[1]/v[0], self.R[0], k, self.gamma)
         deltaout[1] = prod_arb_deltaout(v[0]/v[1], self.R[1], k, self.gamma)
+        print(deltain, deltaout)
         return deltain, deltaout
 
 class GeometricMeanTwoToken(CFMM):
@@ -92,9 +93,9 @@ class GeometricMeanTwoToken(CFMM):
 
     def find_arb(self, v):
         def geo_arb_deltain(m, R1, R2, gamma, eta):
-            np.max((gamma * m * eta * R1 * R2**eta) ** (1 / (eta + 1)) - R2, 0) / gamma
+            return np.max((gamma * m * eta * R1 * R2**eta) ** (1 / (eta + 1)) - R2, 0) / gamma
         def geo_arb_deltaout(m, R1, R2, gamma, eta):
-            np.max(R1 - ((R2 * R1 ** (1 / eta)) / (eta * gamma * m)) ** (eta / (1 + eta)), 0)
+            return np.max(R1 - ((R2 * R1 ** (1 / eta)) / (eta * gamma * m)) ** (eta / (1 + eta)), 0)
         
         ## Solves the maximum arbitrage problem for 2 token G3M.
         eta = self.w[0] / self.w[1]
