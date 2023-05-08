@@ -2,51 +2,39 @@ import numpy as np
 import scipy.optimize as opt
 from concurrent.futures import ThreadPoolExecutor
 from cfmms import zerotrade
+import cvxpy as cvx
 
 class Router:
-    def __init__(self, objective, cfmms, number_of_tokens):
+    def __init__(self, objective, cfmms, number_of_tokens, p):
        self.objective = objective
        self.cfmms = cfmms
-       self.deltain = [zerotrade(c) for c in cfmms]
-       self.deltaout = [zerotrade(c) for c in cfmms]
-       self.v = np.zeros(number_of_tokens)
-    
-    def find_arb(self, v):
-        def sub_method(i):
-            return self.cfmms[i].find_arb(v)
-        threads = []
-        with ThreadPoolExecutor() as executor:
-            threads = list(executor.map(sub_method, range(len(self.cfmms))))
-        self.deltain, self.deltaout = zip(*threads)
-        return self.deltain, self.deltaout
+       self.deltain = [cvx.Variable(len(c.Ai), nonneg=True) for c in cfmms]
+       self.deltaout = [cvx.Variable(len(c.Ai), nonneg=True) for c in cfmms]
+       self.v = p
     
     def route(self, v=None):
-        def fn(v):
-            if not np.all(v == self.v):
-                self.find_arb(v)
-                self.v = v.copy()
-            accumulator = 0.0
-            for i in range (len(self.cfmms)):
-                accumulator += np.dot(self.deltaout[i], v[self.cfmms[i].Ai]) - np.dot(self.deltain[i], v[self.cfmms[i].Ai])
-            return self.objective.f(v) + accumulator
+        A = []
+        for c in self.cfmms:
+            n_i = len(c.Ai)
+            A_i = np.zeros((len(self.v), n_i))
+            for i, idx in enumerate(c.Ai):
+                A_i[idx, i] = 1
+            A.append(A_i)
 
-        def grad(v):
-            if not np.all(v == self.v):
-                self.find_arb(v)
-                self.v = v.copy()
-            G = self.objective.grad(v)
+        new_reserves = [c.R + c.gamma * delta - lambdas for c, delta, lambdas in zip(self.cfmms, self.deltaout, self.deltain)]
+        psi = cvx.sum([A_i @ (lambdas - delta) for A_i, lambdas, delta in zip(A, self.deltain, self.deltaout)])
 
-            for i in range(len(self.cfmms)):
-                G[self.cfmms[i].Ai] += self.deltain[i]
-                G[self.cfmms[i].Ai] -= self.deltaout[i]
-            return G
+        cons = []
+        for i in range(len(self.cfmms)):
+            cons.append(cvx.geo_mean(new_reserves[i], p=self.cfmms[i].w) >= cvx.geo_mean(self.cfmms[i].R, p=self.cfmms[i].w))
+            cons.append(new_reserves[i] >= 0)
 
-        if v is None:
-            v = self.v
-        fn(v)
-        v = opt.minimize(fun=fn, x0=v, method='L-BFGS-B', jac=grad, bounds=list(zip(self.objective.lower_limit(), self.objective.upper_limit())))
-        self.v = v.x
-        print("Optimization occurs")
-        self.find_arb(self.v)
+        cons.append(psi >= 0) 
+
+        opti = cvx.Maximize(self.v @ psi)
+        prob = cvx.Problem(opti, cons)
+        prob.solve()
+        print(self.deltain[0].value)
+        print(self.v)
         return self.deltain, self.deltaout
  
