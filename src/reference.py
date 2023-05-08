@@ -31,7 +31,7 @@ fees = [
 # "Market value" of tokens (say, in a centralized exchange)
 market_value = [
     1.5,
-    10,
+    4,
     2,
     3
 ] 
@@ -53,7 +53,7 @@ deltas = [cp.Variable(len(l), nonneg=True) for l in local_indices]
 lambdas = [cp.Variable(len(l), nonneg=True) for l in local_indices]
 
 psi = cp.sum([A_i @ (L - D) for A_i, D, L in zip(A, deltas, lambdas)])
-
+psi2 = cp.sum([A_i @ D for A_i, D, L in zip(A, deltas, lambdas)])
 # Objective is to maximize "total market value" of coins out
 obj = cp.Maximize(market_value @ psi)
 
@@ -89,12 +89,13 @@ print("Pool 1 Price: ", Uni1.get_price())
 print("Pool 2 Price: ", Uni2.get_price())
 print("Pool 3 Price: ", Uni3.get_price())
 print("Pool 4 Price: ", Uni4.get_price())
-Uni1_update = Uni(local_indices[1], Uni1.R + Uni1.gamma * deltas[1].value - lambdas[1].value, Uni1.gamma)
-Uni2_update = Uni(local_indices[2], Uni2.R + Uni2.gamma * deltas[2].value - lambdas[2].value, Uni2.gamma)
-Uni3_update = Uni(local_indices[3], Uni3.R + Uni3.gamma * deltas[3].value - lambdas[3].value, Uni3.gamma)
-Uni4_update = Uni(local_indices[4], Uni4.R + Uni4.gamma * deltas[4].value - lambdas[4].value, Uni4.gamma)
+print("Arbitrage occurs!")
+print(f"Total profit: {prob.value}")
+Uni1_update = Uni(local_indices[1], Uni1.R + deltas[1].value - lambdas[1].value, Uni1.gamma)
+Uni2_update = Uni(local_indices[2], Uni2.R + deltas[2].value - lambdas[2].value, Uni2.gamma)
+Uni3_update = Uni(local_indices[3], Uni3.R + deltas[3].value - lambdas[3].value, Uni3.gamma)
+Uni4_update = Uni(local_indices[4], Uni4.R + deltas[4].value - lambdas[4].value, Uni4.gamma)
 print("Pool 1 Price after Arb: ", Uni1_update.get_price())
 print("Pool 2 Price after Arb: ", Uni2_update.get_price())
 print("Pool 3 Price after Arb: ", Uni3_update.get_price())
 print("Pool 4 Price after Arb: ", Uni4_update.get_price())
-print(f"Total output value: {prob.value}")
